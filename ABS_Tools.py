@@ -6,12 +6,13 @@ from authlib.jose import JsonWebSignature
 import pandas as pd
 
 class AbsTools:
-    def  __init__(self, token_id, token_secret, wanted_record=None, found_record=None, type_choice=None):
+    def  __init__(self, token_id, token_secret, wanted_record=None, found_record=None, type_choice=None, s_m_a=None):
         self.token_id = token_id
         self.token_secret = token_secret
         self.wanted_record = wanted_record
         self.found_record = found_record
         self.type_choice = type_choice
+        self.s_m_a = s_m_a
     
     def get_abs_record(self):
         request = {
@@ -84,10 +85,21 @@ class AbsTools:
         elif choose_type == 'serial':
             self.type_choice = f"pageSize=1&select=deviceName,serialNumber&serialNumber={self.wanted_record}"
     
+    def s_m_a_choice(self):
+        print("How many records are you searchign for?")
+        self.s_m_a = input("Please type either - single - multiple - all - to proceed: ")
+        if self.s_m_a.lower() != "single" or self.s_m_a.lower() != "multiple" or self.s_m_a.lower() != "all":
+            print(self.s_m_a)
+            print("Invalid Entry")
+            self.s_m_a = None
+            self.s_m_a_choice()
+
     def get_specific_record(self, choose_id, choose_type):
         self.wanted_record = choose_id
         self.type_setter(choose_type)
         self.get_abs_record()
+
+    #def get_all_records()
 
     def unenroll_single(self, choice):
         self.wanted_record = choice
@@ -96,4 +108,5 @@ class AbsTools:
 
 abs_data = AbsTools(my_secrets.ABS_API_KEY, my_secrets.ABS_API_SECRET)
 
-abs_data.get_specific_record("GZDQG42", "serial")
+#abs_data.get_specific_record("GZDQG42", "serial")
+abs_data.s_m_a_choice()
