@@ -1,0 +1,1 @@
+Get-ADComputer -Filter * -Properties OperatingSystem | Select-Object name, enabled, OperatingSystem | Export-CSV C:\Users\cass.golkin\Documents\Python\Learn_API\file_output\ad_computers.csv -NoTypeInformation

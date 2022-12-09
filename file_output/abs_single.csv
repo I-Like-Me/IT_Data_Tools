@@ -1,0 +1,2 @@
+lastUpdatedDateTimeUtc,agentStatus,deviceName,serialNumber,username,currentUsername,isCTESActive,lastConnectedDateTimeUtc,rnrBitLocker
+2022-12-02T14:00:07.554Z,A,PC457C4W18,MJ06FCRB,AD\dba2031,AD\dba2031,TRUE,2022-12-02T15:20:18.873Z,{'status': 'Disabled'}
