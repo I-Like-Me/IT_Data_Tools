@@ -9,20 +9,24 @@ class AbsTools:
     def  __init__(self, token_id, token_secret):
         self.token_id = token_id
         self.token_secret = token_secret
-        self.wanted_record = None
+        self.keyword_choice = None
         self.found_record = None
         self.keyword_type_choice = None
-        self.action_url = None
+        self.current_url = None
+        self.action_choice = None
         self.s_m_a_choice = None
         self.get_or_post_choice = None
         self.query_string_assembled = None
+        self.found_uid = None
+        self.current_task_method = None
+        self.csv_file = None
 
     
-    def get_abs_record(self):
+    def get_or_post_record(self):
         request = {
-            "method": self.get_or_post_choice,
+            "method": self.keyword_choice,
             "contentType": "application/json",
-            "uri": self.action_url,
+            "uri": self.current_url,
             "queryString": self.query_string_assembled,
             "payload": {}
         }
@@ -83,21 +87,38 @@ class AbsTools:
         print("Unenrolling")
         print(r_json)
     
-    def keyword_type_setter(self, choose_keyword_type):
-        if choose_keyword_type == 'name':
-            self.keyword_type_choice = f"pageSize=1&select=deviceName,serialNumber&deviceName={self.wanted_record}"
-        elif choose_keyword_type == 'serial':
-            self.keyword_type_choice = f"pageSize=1&select=deviceName,serialNumber&serialNumber={self.wanted_record}"
+    def keyword_type_setter(self):
+        print("Choose a keyword type?")
+        self.keyword_type_choice = input("Please type either - name - serial - to proceed: ").lower()        
+        if self.keyword_type_choice == 'name':
+            print("Searching by name...")
+            self.keyword_type_choice = "&deviceName="
+        elif self.keyword_type_choice == 'serial':
+            print("Searching by serial...")
+            self.keyword_type_choice = "&serialNumber="
+        else:
+            print(self.keyword_type_choice)
+            print("Invalid Entry")
+            self.keyword_type_choice = None
+            self.keyword_type_setter()        
 
     def s_m_a_setter(self):
         print("How many records are you searching for?")
         self.s_m_a_choice = input("Please type either - single - multiple - all - to proceed: ").lower()
         if self.s_m_a_choice == "single":
+            self.keyword_setter()
+            self.keyword_type_setter()
             print("Searching for a specific record...")
         elif self.s_m_a_choice == "multiple":
+            self.file_setter()
+            self.keyword_type_setter()
             print("Searching for multiple records...")       
-        elif self.s_m_a_choice == "all":
+        elif self.s_m_a_choice == "all" and self.get_or_post_choice == "GET":
             print("Getting all records...")  
+        elif self.s_m_a_choice == "all" and self.get_or_post_choice == "POST":
+            print("Selecting all not available for POST requests")
+            self.s_m_a_choice = None
+            self.s_m_a_setter()
         else:
             print(self.s_m_a_choice)
             print("Invalid Entry")
@@ -121,26 +142,48 @@ class AbsTools:
 
     def action_setter(self):
         print("What action would you like to take?")
-        self.action_url = input("Please type either - unenroll - to proceed: ").lower()
-        if self.action_url == "unenroll":
+        self.action_choice = input("Please type either - unenroll - to proceed: ").lower()
+        if self.action_choice == "unenroll":
             print("Initializing unenrollment tool...")
         else:
-            print(self.action_url)
+            print(self.action_choice)
             print("Invalid Entry")
-            self.action_url = None
+            self.action_choice = None
             self.action_setter()       
 
-    def get_specific_record(self, choose_id, choose_type):
-        self.wanted_record = choose_id
-        self.type_setter(choose_type)
-        self.get_abs_record()
+    def keyword_setter(self):
+        print("Which record are you looking for?")
+        self.keyword_choice = input("Type keyword to proceed (Cap-Sensitive): ")
+        print("Searching for a specific record...")
 
-    def unenroll_single(self, choice):
-        self.wanted_record = choice
-        self.get_abs_record()
-        self.unenroll_abs_record()
+    def query_string_maker(self):
+        print("Building quary string...")
 
-abs_data = AbsTools(my_secrets.ABS_API_KEY, my_secrets.ABS_API_SECRET)
+    def query_string_wiper(self):
+        self.query_string_assembled = ''
+
+    def get_post_checker(self):
+        if self.get_or_post_choice == "GET" and self.current_task_method == None:
+            self.current_task_method = "GET"
+        elif self.get_or_post_choice == "GET" and self.current_task_method == "GET":
+            print("Returning requested record.")
+        elif self.get_or_post_choice == "POST" and self.current_task_method == None:
+            self.current_task_method = "GET"
+        elif self.get_or_post_choice == "POST" and self.current_task_method == "GET":
+            self.current_task_method = "POST"
+
+    def file_setter(self):
+        print("Setting file location...")
+
+    def url_setter(self):
+        print("Setting URL...")
+
+    def make_request(self):
+        self.get_or_post_setter()
+        self.get_post_checker()
+        self.s_m_a_setter()
+
+abs_tools_1 = AbsTools(my_secrets.ABS_API_KEY, my_secrets.ABS_API_SECRET)
 
 #abs_data.get_specific_record("GZDQG42", "serial")
-abs_data.get_or_post_choice()
+abs_tools_1.action_setter()
