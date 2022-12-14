@@ -19,12 +19,13 @@ class AbsTools:
         self.query_string_assembled = None
         self.found_uid = None
         self.current_task_method = None
-        self.csv_file = None
+        self.multiple_keywords = None
+        self.next_page = None
 
     
     def get_or_post_record(self):
         request = {
-            "method": self.keyword_choice,
+            "method": self.current_task_method,
             "contentType": "application/json",
             "uri": self.current_url,
             "queryString": self.query_string_assembled,
@@ -49,8 +50,9 @@ class AbsTools:
         request_url = "https://api.absolute.com/jws/validate"
         r = requests.post(request_url, signed, {"content-type": "text/plain"})
         r_json = r.json()
-        self.found_record = pd.DataFrame(r_json['data'])
-        print(self.found_record)
+        print(r_json)
+        #self.found_record = pd.DataFrame(r_json['data'])
+        #print(self.found_record)
     
     def unenroll_abs_record(self):
         request = {
@@ -130,8 +132,6 @@ class AbsTools:
         self.get_or_post_choice = input("Please type either - GET - POST - to proceed: ").upper()
         if self.get_or_post_choice == "GET":
             print("Getting reporting tools...")
-            self.action_url = "/v3/reporting/devices"
-            print("URL")
         elif self.get_or_post_choice == "POST":
             print("Getting action tools...")
         else:
@@ -156,8 +156,34 @@ class AbsTools:
         self.keyword_choice = input("Type keyword to proceed (Cap-Sensitive): ")
         print("Searching for a specific record...")
 
-    def query_string_maker(self):
+    def csv_to_df(self):
+        self.multiple_keywords = pd.read_csv(r"multi_search_file\keyword_list.csv")
+
+    def query_string_maker(self, row=0):
         print("Building quary string...")
+        if self.s_m_a_choice == "single":
+            self.query_string_assembled = f"pageSize=1&select=deviceName,serialNumber{self.keyword_type_choice}{self.keyword_choice}"
+            self.get_or_post_record()
+        elif self.s_m_a_choice == "multiple":
+            self.csv_to_df()
+            self.keyword_choice = self.multiple_keywords.loc[row, self.keyword_type_choice[1:-7]]
+            self.query_string_assembled = f"pageSize=1&select=deviceName,serialNumber{self.keyword_type_choice}{self.keyword_choice}"
+            self.get_or_post_record()
+            print(self.query_string_assembled)
+            while row < len(self.multiple_keywords) -1:
+                row += 1
+                self.keyword_choice = self.multiple_keywords.loc[row, self.keyword_type_choice[1:-7]]
+                self.query_string_assembled = f"pageSize=1&select=deviceName,serialNumber{self.keyword_type_choice}{self.keyword_choice}"
+                print(self.query_string_assembled)
+                self.get_or_post_record()
+        #elif self.s_m_a_choice == "all":
+            #self.page_turner()
+
+    def page_turner(self):
+        if self.next_page == None:
+            self.query_string_assembled = "pageSize=100&select=deviceName,serialNumber"
+        elif self.next_page != None:
+            self.query_string_assembled = f"pageSize=100&select=deviceName,serialNumber&nextPage={self.next_page}"        
 
     def query_string_wiper(self):
         self.query_string_assembled = ''
@@ -176,14 +202,22 @@ class AbsTools:
         print("Setting file location...")
 
     def url_setter(self):
-        print("Setting URL...")
+        if self.current_task_method == "GET":
+            self.current_url = "/v3/reporting/devices"
+        elif self.current_task_method == "POST":
+            self.current_url = f"/v3/actions/requests/{self.action_choice}"
+
+    def runner(self):
+        print("")
 
     def make_request(self):
         self.get_or_post_setter()
         self.get_post_checker()
+        self.url_setter()
         self.s_m_a_setter()
+        self.query_string_maker()
 
 abs_tools_1 = AbsTools(my_secrets.ABS_API_KEY, my_secrets.ABS_API_SECRET)
 
 #abs_data.get_specific_record("GZDQG42", "serial")
-abs_tools_1.action_setter()
+abs_tools_1.make_request()
