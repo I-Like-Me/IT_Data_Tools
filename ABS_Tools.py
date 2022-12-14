@@ -11,6 +11,8 @@ class AbsTools:
         self.token_secret = token_secret
         self.keyword_choice = None
         self.found_record = None
+        self.found_record_as_json = None
+        self.found_record_as_df = None
         self.keyword_type_choice = None
         self.current_url = None
         self.action_choice = None
@@ -48,11 +50,7 @@ class AbsTools:
         signed = jws.serialize_compact(headers, json.dumps(request_payload_data), self.token_secret)
 
         request_url = "https://api.absolute.com/jws/validate"
-        r = requests.post(request_url, signed, {"content-type": "text/plain"})
-        r_json = r.json()
-        print(r_json)
-        #self.found_record = pd.DataFrame(r_json['data'])
-        #print(self.found_record)
+        self.found_record = requests.post(request_url, signed, {"content-type": "text/plain"})
     
     def unenroll_abs_record(self):
         request = {
@@ -158,6 +156,12 @@ class AbsTools:
 
     def csv_to_df(self):
         self.multiple_keywords = pd.read_csv(r"multi_search_file\keyword_list.csv")
+    
+    def convert_to_json(self):
+        self.found_record_as_json = self.found_record.json()
+
+    def json_to_df(self):
+        self.found_record_as_df = pd.DataFrame(self.found_record_as_json['data'])
 
     def query_string_maker(self, row=0):
         print("Building quary string...")
@@ -198,8 +202,8 @@ class AbsTools:
         elif self.get_or_post_choice == "POST" and self.current_task_method == "GET":
             self.current_task_method = "POST"
 
-    def file_setter(self):
-        print("Setting file location...")
+    #def file_setter(self):
+        #print("Setting file location...")
 
     def url_setter(self):
         if self.current_task_method == "GET":
@@ -207,8 +211,19 @@ class AbsTools:
         elif self.current_task_method == "POST":
             self.current_url = f"/v3/actions/requests/{self.action_choice}"
 
-    def runner(self):
-        print("")
+    #def runner(self):
+        #print("")
+
+    #def return_request(self):
+
+
+    def multi_checker(self):
+        if self.s_m_a_choice == "single":
+            self.convert_to_json()
+            self.json_to_df()
+            print(self.found_record_as_df)
+        elif self.s_m_a_choice == "multiple":
+            print("check the end of the request for answers tomorrow.")
 
     def make_request(self):
         self.get_or_post_setter()
@@ -216,6 +231,7 @@ class AbsTools:
         self.url_setter()
         self.s_m_a_setter()
         self.query_string_maker()
+        self.get_post_checker()
 
 abs_tools_1 = AbsTools(my_secrets.ABS_API_KEY, my_secrets.ABS_API_SECRET)
 
