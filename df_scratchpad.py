@@ -7,3 +7,9 @@ print(df.loc["viper", "max_speed"])
 
 fruit = "apple"
 print(fruit[:-1])
+print(df)
+
+if df.empty == True:
+    print("equals None")
+else:
+    print("pizza")

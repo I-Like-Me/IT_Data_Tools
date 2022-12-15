@@ -12,7 +12,8 @@ class AbsTools:
         self.keyword_choice = None
         self.found_record = None
         self.found_record_as_json = None
-        self.found_record_as_df = None
+        self.found_record_as_df = pd.DataFrame({'A' : []})
+        self.current_multi_record = None
         self.keyword_type_choice = None
         self.current_url = None
         self.action_choice = None
@@ -110,7 +111,7 @@ class AbsTools:
             self.keyword_type_setter()
             print("Searching for a specific record...")
         elif self.s_m_a_choice == "multiple":
-            self.file_setter()
+            self.csv_to_df()
             self.keyword_type_setter()
             print("Searching for multiple records...")       
         elif self.s_m_a_choice == "all" and self.get_or_post_choice == "GET":
@@ -170,16 +171,14 @@ class AbsTools:
             self.get_or_post_record()
         elif self.s_m_a_choice == "multiple":
             self.csv_to_df()
-            self.keyword_choice = self.multiple_keywords.loc[row, self.keyword_type_choice[1:-7]]
-            self.query_string_assembled = f"pageSize=1&select=deviceName,serialNumber{self.keyword_type_choice}{self.keyword_choice}"
-            self.get_or_post_record()
-            print(self.query_string_assembled)
-            while row < len(self.multiple_keywords) -1:
-                row += 1
+            while row < len(self.multiple_keywords):
                 self.keyword_choice = self.multiple_keywords.loc[row, self.keyword_type_choice[1:-7]]
                 self.query_string_assembled = f"pageSize=1&select=deviceName,serialNumber{self.keyword_type_choice}{self.keyword_choice}"
                 print(self.query_string_assembled)
                 self.get_or_post_record()
+                self.multi_run()
+                self.found_record_as_df = self.current_multi_record
+                row += 1
         #elif self.s_m_a_choice == "all":
             #self.page_turner()
 
@@ -197,13 +196,14 @@ class AbsTools:
             self.current_task_method = "GET"
         elif self.get_or_post_choice == "GET" and self.current_task_method == "GET":
             print("Returning requested record.")
+            print(self.found_record_as_df)
         elif self.get_or_post_choice == "POST" and self.current_task_method == None:
             self.current_task_method = "GET"
         elif self.get_or_post_choice == "POST" and self.current_task_method == "GET":
             self.current_task_method = "POST"
 
-    #def file_setter(self):
-        #print("Setting file location...")
+    def file_setter(self):
+        print("Setting file location...")
 
     def url_setter(self):
         if self.current_task_method == "GET":
@@ -217,13 +217,14 @@ class AbsTools:
     #def return_request(self):
 
 
-    def multi_checker(self):
-        if self.s_m_a_choice == "single":
+    def multi_run(self):
+        if self.found_record_as_df.empty == True:
             self.convert_to_json()
             self.json_to_df()
-            print(self.found_record_as_df)
-        elif self.s_m_a_choice == "multiple":
-            print("check the end of the request for answers tomorrow.")
+            self.current_multi_record = self.found_record_as_df
+        else:
+            self.current_multi_record.append(self.found_record_as_df, ignore_index=True)
+            #change to concat compining multiple df stored on a list
 
     def make_request(self):
         self.get_or_post_setter()
