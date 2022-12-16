@@ -183,13 +183,21 @@ class AbsTools:
             self.found_record_as_df = self.combined_multiple_records
         elif self.s_m_a_choice == "all":
             self.page_turner()
+            self.multi_run()
+            self.next_page = self.found_record_as_json['metadata']["pagination"]['nextPage']
+            while "pagination" in self.found_record_as_json['metadata']:
+                self.page_turner()
+                self.multi_run()
+                self.next_page = self.found_record_as_json['metadata']["pagination"]['nextPage']
+
+                
 
     def page_turner(self):
         if self.next_page == None:
             self.query_string_assembled = "pageSize=100&select=deviceName,serialNumber"
-            
         elif self.next_page != None:
-            self.query_string_assembled = f"pageSize=100&select=deviceName,serialNumber&nextPage={self.next_page}"        
+            self.query_string_assembled = f"pageSize=100&select=deviceName,serialNumber&nextPage={self.next_page}" 
+            print(self.next_page)       
 
     def query_string_wiper(self):
         self.query_string_assembled = ''
@@ -205,9 +213,6 @@ class AbsTools:
         elif self.get_or_post_choice == "POST" and self.current_task_method == "GET":
             self.current_task_method = "POST"
 
-    def file_setter(self):
-        print("Setting file location...")
-
     def url_setter(self):
         if self.current_task_method == "GET":
             self.current_url = "/v3/reporting/devices"
@@ -217,6 +222,13 @@ class AbsTools:
     #def return_request(self):
 
     def multi_run(self):
+        self.get_or_post_record()
+        self.convert_to_json()
+        self.json_to_df()
+        print(self.found_record_as_df)
+        self.records_as_df_list.append(self.found_record_as_df)
+
+    def all_run(self):
         self.get_or_post_record()
         self.convert_to_json()
         self.json_to_df()
