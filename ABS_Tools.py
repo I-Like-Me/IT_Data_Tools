@@ -12,8 +12,9 @@ class AbsTools:
         self.keyword_choice = None
         self.found_record = None
         self.found_record_as_json = None
-        self.found_record_as_df = pd.DataFrame({'A' : []})
-        self.current_multi_record = None
+        self.found_record_as_df = None
+        self.records_as_df_list = []
+        self.combined_multiple_records = None
         self.keyword_type_choice = None
         self.current_url = None
         self.action_choice = None
@@ -169,22 +170,24 @@ class AbsTools:
         if self.s_m_a_choice == "single":
             self.query_string_assembled = f"pageSize=1&select=deviceName,serialNumber{self.keyword_type_choice}{self.keyword_choice}"
             self.get_or_post_record()
+            self.convert_to_json()
+            self.json_to_df()
         elif self.s_m_a_choice == "multiple":
             self.csv_to_df()
             while row < len(self.multiple_keywords):
                 self.keyword_choice = self.multiple_keywords.loc[row, self.keyword_type_choice[1:-7]]
                 self.query_string_assembled = f"pageSize=1&select=deviceName,serialNumber{self.keyword_type_choice}{self.keyword_choice}"
-                print(self.query_string_assembled)
-                self.get_or_post_record()
                 self.multi_run()
-                self.found_record_as_df = self.current_multi_record
                 row += 1
-        #elif self.s_m_a_choice == "all":
-            #self.page_turner()
+            self.combined_multiple_records = pd.concat(self.records_as_df_list, ignore_index=True)
+            self.found_record_as_df = self.combined_multiple_records
+        elif self.s_m_a_choice == "all":
+            self.page_turner()
 
     def page_turner(self):
         if self.next_page == None:
             self.query_string_assembled = "pageSize=100&select=deviceName,serialNumber"
+            
         elif self.next_page != None:
             self.query_string_assembled = f"pageSize=100&select=deviceName,serialNumber&nextPage={self.next_page}"        
 
@@ -195,7 +198,7 @@ class AbsTools:
         if self.get_or_post_choice == "GET" and self.current_task_method == None:
             self.current_task_method = "GET"
         elif self.get_or_post_choice == "GET" and self.current_task_method == "GET":
-            print("Returning requested record.")
+            print("Returning requested record...")
             print(self.found_record_as_df)
         elif self.get_or_post_choice == "POST" and self.current_task_method == None:
             self.current_task_method = "GET"
@@ -211,20 +214,13 @@ class AbsTools:
         elif self.current_task_method == "POST":
             self.current_url = f"/v3/actions/requests/{self.action_choice}"
 
-    #def runner(self):
-        #print("")
-
     #def return_request(self):
 
-
     def multi_run(self):
-        if self.found_record_as_df.empty == True:
-            self.convert_to_json()
-            self.json_to_df()
-            self.current_multi_record = self.found_record_as_df
-        else:
-            self.current_multi_record.append(self.found_record_as_df, ignore_index=True)
-            #change to concat compining multiple df stored on a list
+        self.get_or_post_record()
+        self.convert_to_json()
+        self.json_to_df()
+        self.records_as_df_list.append(self.found_record_as_df)
 
     def make_request(self):
         self.get_or_post_setter()
