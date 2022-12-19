@@ -183,21 +183,27 @@ class AbsTools:
             self.found_record_as_df = self.combined_multiple_records
         elif self.s_m_a_choice == "all":
             self.page_turner()
-            self.multi_run()
-            self.next_page = self.found_record_as_json['metadata']["pagination"]['nextPage']
-            while "pagination" in self.found_record_as_json['metadata']:
-                self.page_turner()
-                self.multi_run()
-                self.next_page = self.found_record_as_json['metadata']["pagination"]['nextPage']
-
-                
+            self.get_or_post_record()
+            self.convert_to_json()
+            self.json_to_df()
+            self.records_as_df_list.append(self.found_record_as_df)
+            self.next_page_detect()
+            self.all_run()
+            self.combined_multiple_records = pd.concat(self.records_as_df_list, ignore_index=True)
+            self.found_record_as_df = self.combined_multiple_records
+                     
 
     def page_turner(self):
         if self.next_page == None:
             self.query_string_assembled = "pageSize=100&select=deviceName,serialNumber"
         elif self.next_page != None:
-            self.query_string_assembled = f"pageSize=100&select=deviceName,serialNumber&nextPage={self.next_page}" 
-            print(self.next_page)       
+            self.query_string_assembled = f"pageSize=100&select=deviceName,serialNumber&nextPage={self.next_page}"  
+
+    def next_page_detect(self):
+        if "pagination" in self.found_record_as_json['metadata']:
+            self.next_page = self.found_record_as_json['metadata']["pagination"]['nextPage']
+        else:
+            self.next_page = self.found_record_as_json['metadata']
 
     def query_string_wiper(self):
         self.query_string_assembled = ''
@@ -207,7 +213,7 @@ class AbsTools:
             self.current_task_method = "GET"
         elif self.get_or_post_choice == "GET" and self.current_task_method == "GET":
             print("Returning requested record...")
-            print(self.found_record_as_df)
+            self.put_in_csv()
         elif self.get_or_post_choice == "POST" and self.current_task_method == None:
             self.current_task_method = "GET"
         elif self.get_or_post_choice == "POST" and self.current_task_method == "GET":
@@ -225,14 +231,19 @@ class AbsTools:
         self.get_or_post_record()
         self.convert_to_json()
         self.json_to_df()
-        print(self.found_record_as_df)
         self.records_as_df_list.append(self.found_record_as_df)
 
     def all_run(self):
-        self.get_or_post_record()
-        self.convert_to_json()
-        self.json_to_df()
-        self.records_as_df_list.append(self.found_record_as_df)
+        while "pagination" in self.found_record_as_json['metadata']:
+            self.page_turner()
+            self.get_or_post_record()
+            self.convert_to_json()
+            self.json_to_df()
+            self.records_as_df_list.append(self.found_record_as_df)
+            self.next_page_detect()
+
+    def put_in_csv(self):
+        self.found_record_as_df.to_csv(r'file_output\abs_computers.csv', index=False, header=True)
 
     def make_request(self):
         self.get_or_post_setter()
