@@ -25,6 +25,7 @@ class AbsTools:
         self.current_task_method = None
         self.multiple_keywords = None
         self.next_page = None
+        self.request_return_format = None
 
     
     def get_or_post_record(self):
@@ -192,7 +193,6 @@ class AbsTools:
             self.combined_multiple_records = pd.concat(self.records_as_df_list, ignore_index=True)
             self.found_record_as_df = self.combined_multiple_records
                      
-
     def page_turner(self):
         if self.next_page == None:
             self.query_string_assembled = "pageSize=100&select=deviceName,serialNumber"
@@ -213,7 +213,7 @@ class AbsTools:
             self.current_task_method = "GET"
         elif self.get_or_post_choice == "GET" and self.current_task_method == "GET":
             print("Returning requested record...")
-            self.put_in_csv()
+            self.return_request()
         elif self.get_or_post_choice == "POST" and self.current_task_method == None:
             self.current_task_method = "GET"
         elif self.get_or_post_choice == "POST" and self.current_task_method == "GET":
@@ -225,7 +225,15 @@ class AbsTools:
         elif self.current_task_method == "POST":
             self.current_url = f"/v3/actions/requests/{self.action_choice}"
 
-    #def return_request(self):
+    def return_request(self):
+        print("Would you like your request saved or displayed?")
+        self.request_return_format = input("Please type either - save - display - to proceed: ").lower()
+        if self.request_return_format == "display":
+            self.s_or_m_display()
+        elif self.request_return_format == "save":
+            print("Saving requested record to file...")
+            self.put_in_csv()
+
 
     def multi_run(self):
         self.get_or_post_record()
@@ -242,8 +250,21 @@ class AbsTools:
             self.records_as_df_list.append(self.found_record_as_df)
             self.next_page_detect()
 
+    def s_or_m_display(self):
+        if self.s_m_a_choice == "single":
+            print(self.found_record_as_df)
+        elif self.s_m_a_choice == "multiple":
+            print(self.combined_multiple_records)
+        elif self.s_m_a_choice == "all":
+            print(self.combined_multiple_records)
+
     def put_in_csv(self):
-        self.found_record_as_df.to_csv(r'file_output\abs_computers.csv', index=False, header=True)
+        if self.s_m_a_choice == "single":
+            self.found_record_as_df.to_csv(r'file_output\abs_single.csv', index=False, header=True)
+        elif self.s_m_a_choice == "multiple":
+            self.found_record_as_df.to_csv(r'file_output\abs_multiple.csv', index=False, header=True)
+        elif self.s_m_a_choice == "all":
+            self.found_record_as_df.to_csv(r'file_output\abs_all.csv', index=False, header=True)
 
     def make_request(self):
         self.get_or_post_setter()
