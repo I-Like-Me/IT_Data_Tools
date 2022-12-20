@@ -167,7 +167,7 @@ class AbsTools:
         self.found_record_as_df = pd.DataFrame(self.found_record_as_json['data'])
 
     def query_string_maker(self, row=0):
-        print("Building quary string...")
+        print("Building query string...")
         if self.s_m_a_choice == "single":
             self.query_string_assembled = f"pageSize=1&select=deviceName,serialNumber{self.keyword_type_choice}{self.keyword_choice}"
             self.get_or_post_record()
@@ -211,13 +211,36 @@ class AbsTools:
     def get_post_checker(self):
         if self.get_or_post_choice == "GET" and self.current_task_method == None:
             self.current_task_method = "GET"
+            self.url_setter()
+            self.s_m_a_setter()
+            self.query_string_maker()
+            print("stage 1")
         elif self.get_or_post_choice == "GET" and self.current_task_method == "GET":
             print("Returning requested record...")
             self.return_request()
+            print("stage 2")
         elif self.get_or_post_choice == "POST" and self.current_task_method == None:
             self.current_task_method = "GET"
+            self.action_setter()
+            self.url_setter()
+            self.s_m_a_setter()
+            self.query_string_maker()
+            print("stage 3")
         elif self.get_or_post_choice == "POST" and self.current_task_method == "GET":
             self.current_task_method = "POST"
+            self.url_setter()
+            self.query_string_wiper()
+            print("stage 4")
+
+    def action_setter(self):
+        self.action_choice = input("Please type either - unenroll - to proceed: ").lower()
+        if self.action_choice == "unenroll":
+            print("Setting action...")
+        else:
+            print(self.action_choice)
+            print("Invalid Entry")
+            self.action_choice = None
+            self.action_setter()        
 
     def url_setter(self):
         if self.current_task_method == "GET":
@@ -233,7 +256,11 @@ class AbsTools:
         elif self.request_return_format == "save":
             print("Saving requested record to file...")
             self.put_in_csv()
-
+        else:
+            print(self.request_return_format)
+            print("Invalid Entry")
+            self.request_return_format = None
+            self.return_request()
 
     def multi_run(self):
         self.get_or_post_record()
@@ -269,10 +296,11 @@ class AbsTools:
     def make_request(self):
         self.get_or_post_setter()
         self.get_post_checker()
-        self.url_setter()
-        self.s_m_a_setter()
-        self.query_string_maker()
+        print(self.query_string_maker())
+        print(self.current_url)
         self.get_post_checker()
+        print(self.query_string_maker())
+        print(self.current_url)
 
 abs_tools_1 = AbsTools(my_secrets.ABS_API_KEY, my_secrets.ABS_API_SECRET)
 
