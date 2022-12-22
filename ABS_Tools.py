@@ -26,6 +26,7 @@ class AbsTools:
         self.multiple_keywords = None
         self.next_page = None
         self.request_return_format = None
+        self.complete = False
 
     
     def get_or_post_record(self):
@@ -139,18 +140,7 @@ class AbsTools:
             print(self.get_or_post_choice)
             print("Invalid Entry")
             self.get_or_post_choice = None
-            self.get_or_post_setter()   
-
-    def action_setter(self):
-        print("What action would you like to take?")
-        self.action_choice = input("Please type either - unenroll - to proceed: ").lower()
-        if self.action_choice == "unenroll":
-            print("Initializing unenrollment tool...")
-        else:
-            print(self.action_choice)
-            print("Invalid Entry")
-            self.action_choice = None
-            self.action_setter()       
+            self.get_or_post_setter()        
 
     def keyword_setter(self):
         print("Which record are you looking for?")
@@ -208,39 +198,16 @@ class AbsTools:
     def query_string_wiper(self):
         self.query_string_assembled = ''
 
-    def get_post_checker(self):
-        if self.get_or_post_choice == "GET" and self.current_task_method == None:
-            self.current_task_method = "GET"
-            self.url_setter()
-            self.s_m_a_setter()
-            self.query_string_maker()
-            print("stage 1")
-        elif self.get_or_post_choice == "GET" and self.current_task_method == "GET":
-            print("Returning requested record...")
-            self.return_request()
-            print("stage 2")
-        elif self.get_or_post_choice == "POST" and self.current_task_method == None:
-            self.current_task_method = "GET"
-            self.action_setter()
-            self.url_setter()
-            self.s_m_a_setter()
-            self.query_string_maker()
-            print("stage 3")
-        elif self.get_or_post_choice == "POST" and self.current_task_method == "GET":
-            self.current_task_method = "POST"
-            self.url_setter()
-            self.query_string_wiper()
-            print("stage 4")
-
     def action_setter(self):
+        print("What action would you like to take?")
         self.action_choice = input("Please type either - unenroll - to proceed: ").lower()
         if self.action_choice == "unenroll":
-            print("Setting action...")
+            print("Initializing unenrollment tool...")
         else:
             print(self.action_choice)
             print("Invalid Entry")
             self.action_choice = None
-            self.action_setter()        
+            self.action_setter()  
 
     def url_setter(self):
         if self.current_task_method == "GET":
@@ -292,15 +259,41 @@ class AbsTools:
             self.found_record_as_df.to_csv(r'file_output\abs_multiple.csv', index=False, header=True)
         elif self.s_m_a_choice == "all":
             self.found_record_as_df.to_csv(r'file_output\abs_all.csv', index=False, header=True)
+    
+    def get_post_checker(self):
+        if self.get_or_post_choice == "GET" and self.current_task_method == None:
+            self.current_task_method = "GET"
+            self.url_setter()
+            self.s_m_a_setter()
+            self.query_string_maker()
+            print("stage 1")
+        elif self.get_or_post_choice == "GET" and self.current_task_method == "GET":
+            print("Returning requested record...")
+            self.return_request()
+            print("stage 2")
+            self.complete = True
+        elif self.get_or_post_choice == "POST" and self.current_task_method == None:
+            self.current_task_method = "GET"
+            self.action_setter()
+            self.url_setter()
+            self.s_m_a_setter()
+            self.query_string_maker()
+            print("stage 3")
+        elif self.get_or_post_choice == "POST" and self.current_task_method == "GET":
+            self.current_task_method = "POST"
+            self.url_setter()
+            self.query_string_wiper()
+            print("stage 4")
 
     def make_request(self):
         self.get_or_post_setter()
+        print(self.current_task_method)
         self.get_post_checker()
-        print(self.query_string_maker())
-        print(self.current_url)
         self.get_post_checker()
-        print(self.query_string_maker())
-        print(self.current_url)
+        if self.complete:
+            print(True)
+            return
+        self.get_post_checker()
 
 abs_tools_1 = AbsTools(my_secrets.ABS_API_KEY, my_secrets.ABS_API_SECRET)
 
