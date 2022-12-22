@@ -27,15 +27,16 @@ class AbsTools:
         self.next_page = None
         self.request_return_format = None
         self.complete = False
+        self.payload = {}
+        self.request = None
 
-    
     def get_or_post_record(self):
         request = {
             "method": self.current_task_method,
             "contentType": "application/json",
             "uri": self.current_url,
             "queryString": self.query_string_assembled,
-            "payload": {}
+            "payload": self.payload
         }
         request_payload_data = {
             "data": request["payload"]
@@ -55,6 +56,7 @@ class AbsTools:
 
         request_url = "https://api.absolute.com/jws/validate"
         self.found_record = requests.post(request_url, signed, {"content-type": "text/plain"})
+        self.request = request
     
     def unenroll_abs_record(self):
         request = {
@@ -219,7 +221,7 @@ class AbsTools:
         print("Would you like your request saved or displayed?")
         self.request_return_format = input("Please type either - save - display - to proceed: ").lower()
         if self.request_return_format == "display":
-            self.s_or_m_display()
+            self.s_m_a_display()
         elif self.request_return_format == "save":
             print("Saving requested record to file...")
             self.put_in_csv()
@@ -244,7 +246,7 @@ class AbsTools:
             self.records_as_df_list.append(self.found_record_as_df)
             self.next_page_detect()
 
-    def s_or_m_display(self):
+    def s_m_a_display(self):
         if self.s_m_a_choice == "single":
             print(self.found_record_as_df)
         elif self.s_m_a_choice == "multiple":
@@ -260,6 +262,29 @@ class AbsTools:
         elif self.s_m_a_choice == "all":
             self.found_record_as_df.to_csv(r'file_output\abs_all.csv', index=False, header=True)
     
+    def payload_builder(self, row=0):
+        print("Building Payload...")
+        if self.s_m_a_choice == "single":
+            self.payload = {
+                "deviceUids": [
+                    self.found_record_as_df.at[0,"deviceUid"]
+                ],
+                "excludeMissingDevices": True
+            }
+            self.get_or_post_record()
+            print(self.request)
+        elif self.s_m_a_choice == "multiple":
+            while row < len(self.combined_multiple_records):
+                self.payload = {
+                    "deviceUids": [
+                        self.combined_multiple_records.at[row,"deviceUid"]
+                    ],
+                    "excludeMissingDevices": True
+                }
+                self.get_or_post_record()
+                print(self.request)
+                row += 1
+
     def get_post_checker(self):
         if self.get_or_post_choice == "GET" and self.current_task_method == None:
             self.current_task_method = "GET"
@@ -283,6 +308,7 @@ class AbsTools:
             self.current_task_method = "POST"
             self.url_setter()
             self.query_string_wiper()
+            self.payload_builder()
             print("stage 4")
 
     def make_request(self):
